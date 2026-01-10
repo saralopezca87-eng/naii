@@ -15,34 +15,21 @@
 
   <!-- Login -->
   <div id="login-form" class="card">
-    <h2>Login</h2>
-    <input type="email" id="email" placeholder="Correo electrónico">
-    <input type="password" id="password" placeholder="Contraseña">
-    <button onclick="login(document.getElementById('email').value, document.getElementById('password').value)">Entrar</button>
+    <h2>Iniciar sesión</h2>
+    <input type="email" id="email" placeholder="Correo electrónico" required>
+    <input type="password" id="password" placeholder="Contraseña" required>
+    <button id="login-btn">Entrar</button>
+    <p id="login-error" style="color:red; display:none;"></p>
   </div>
 
   <!-- Contenedor de válvulas -->
-  <main>
+  <main style="display:none;">
     <section id="valves-container"></section>
   </main>
-
-  <!-- Plantilla de tarjeta de válvula (JS genera 12) -->
-  <template id="valve-card-template">
-    <div class="valve-card">
-      <h2>Válvula X</h2>
-      <p>Estado: <span class="state-text">OFF</span></p>
-      <button class="toggle-btn">Encender</button>
-
-      <div class="schedule-container">
-        <label>Desde: <input type="time" class="start-time"></label>
-        <label>Hasta: <input type="time" class="end-time"></label>
-        <button class="schedule-btn">Programar</button>
-      </div>
-    </div>
-  </template>
 
   <script type="module" src="app.js"></script>
 </body>
 </html>
+
 
 
