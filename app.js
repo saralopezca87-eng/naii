@@ -56,8 +56,11 @@ function createValveCard(id, state) {
     <h2>Válvula ${id}</h2>
     <p>Estado: <span class="state-text">${state ? "ON" : "OFF"}</span></p>
     <button onclick="toggleValve(${id})">${state ? "Apagar" : "Encender"}</button>
-    <input type="number" id="time-${id}" placeholder="Segundos">
-    <button onclick="scheduleValve(${id})">Programar</button>
+    <div style="margin-top:8px;">
+      <label>Inicio: <input type="time" id="start-${id}"></label>
+      <label>Fin: <input type="time" id="end-${id}"></label>
+      <button onclick="scheduleValve(${id})">Programar</button>
+    </div>
   `;
 
   valvesContainer.appendChild(card);
@@ -99,15 +102,18 @@ async function toggleValve(id) {
 
 // Programar válvula
 async function scheduleValve(id) {
-  const seconds = parseInt(document.getElementById(`time-${id}`).value);
-  if (!seconds || seconds <= 0) return alert("Ingresa segundos válidos");
+  const start = document.getElementById(`start-${id}`).value;
+  const end = document.getElementById(`end-${id}`).value;
+  if (!start || !end) return alert("Debes ingresar hora de inicio y fin");
 
   try {
-    console.log(`Programando válvula ${id} por ${seconds} segundos`);
-    await fetch(`${API_URL}/valve/${id}/schedule?seconds=${seconds}`, {
-      method: "POST"
+    console.log(`Programando válvula ${id} de ${start} a ${end}`);
+    await fetch(`${API_URL}/valve/${id}/schedule`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ horaInicio: start, horaFin: end })
     });
-    alert(`Válvula ${id} programada por ${seconds} segundos`);
+    alert(`Válvula ${id} programada de ${start} a ${end}`);
     loadStatus();
   } catch (e) {
     console.error("Error al programar válvula:", e);
