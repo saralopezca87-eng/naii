@@ -1,8 +1,0 @@
-[build]
-  publish = "."           # publicamos la raíz del proyecto
-  command = ""            # no necesitamos comando de build si es solo HTML/CSS/JS
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
