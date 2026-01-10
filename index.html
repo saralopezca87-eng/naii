@@ -13,10 +13,20 @@
     <p>Control total de tus 12 válvulas</p>
   </header>
 
+  <!-- Login -->
+  <div id="login-form" class="card">
+    <h2>Login</h2>
+    <input type="email" id="email" placeholder="Correo electrónico">
+    <input type="password" id="password" placeholder="Contraseña">
+    <button onclick="login(document.getElementById('email').value, document.getElementById('password').value)">Entrar</button>
+  </div>
+
+  <!-- Contenedor de válvulas -->
   <main>
     <section id="valves-container"></section>
   </main>
 
-  <script src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
+
