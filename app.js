@@ -1,6 +1,6 @@
 // app.js
 import { initializeApp } from "firebase/app";
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -11,31 +11,47 @@ const firebaseConfig = {
   messagingSenderId: "23168988354",
   appId: "1:23168988354:web:bd1cf85aeec5b0df36f75b"
 };
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
+// URL del backend
 const API_URL = "https://api.sistemaderiego.online";
 
 const valvesContainer = document.getElementById("valves-container");
+const loginForm = document.getElementById("login-form");
 
-// ---------------------------------
-// LOGIN CON FIREBASE
-// ---------------------------------
-window.login = async function(email, password) {
-  try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    console.log("Usuario logueado:", userCredential.user.email);
-    document.getElementById("login-form").style.display = "none";
-    loadStatus();
-  } catch (error) {
-    console.error("Error de login:", error.message);
-    alert("Usuario o contraseña incorrectos");
-  }
+// --- LOGIN ---
+function login(email, password) {
+  console.log("[DEBUG] Intentando login:", email);
+  signInWithEmailAndPassword(auth, email, password)
+    .then(userCredential => {
+      console.log("[DEBUG] Login exitoso:", userCredential.user.email);
+      loginForm.style.display = "none";
+      valvesContainer.style.display = "grid";
+      loadStatus();
+    })
+    .catch(error => {
+      console.error("[ERROR] Login fallido:", error);
+      alert("Login fallido: " + error.message);
+    });
 }
 
-// ---------------------------------
-// CREAR TARJETAS DE VÁLVULAS
-// ---------------------------------
+// Detectar estado de autenticación
+onAuthStateChanged(auth, user => {
+  if (user) {
+    console.log("[DEBUG] Usuario ya logueado:", user.email);
+    loginForm.style.display = "none";
+    valvesContainer.style.display = "grid";
+    loadStatus();
+  } else {
+    console.log("[DEBUG] No hay usuario logueado");
+    loginForm.style.display = "block";
+    valvesContainer.style.display = "none";
+  }
+});
+
+// --- CREAR TARJETAS DE VÁLVULAS ---
 function createValveCard(id, state) {
   const card = document.createElement("div");
   card.classList.add("valve-card");
@@ -46,10 +62,9 @@ function createValveCard(id, state) {
     <h2>Válvula ${id}</h2>
     <p>Estado: <span class="state-text">${state ? "ON" : "OFF"}</span></p>
     <button onclick="toggleValve(${id})">${state ? "Apagar" : "Encender"}</button>
-    
     <div class="schedule-container">
-      <label>Inicio: <input type="time" id="start-${id}"></label>
-      <label>Fin: <input type="time" id="end-${id}"></label>
+      <label>Desde: <input type="time" id="start-${id}"></label>
+      <label>Hasta: <input type="time" id="end-${id}"></label>
       <button onclick="scheduleValve(${id})">Programar</button>
     </div>
   `;
@@ -57,11 +72,10 @@ function createValveCard(id, state) {
   valvesContainer.appendChild(card);
 }
 
-// ---------------------------------
-// CARGAR ESTADO INICIAL
-// ---------------------------------
+// --- CARGAR ESTADO INICIAL ---
 async function loadStatus() {
   try {
+    console.log("[DEBUG] Cargando estado de válvulas...");
     const res = await fetch(`${API_URL}/status`);
     if (!res.ok) throw new Error("Error al obtener estado");
     const data = await res.json();
@@ -69,65 +83,57 @@ async function loadStatus() {
     for (let id = 1; id <= 12; id++) {
       createValveCard(id, data[id]);
     }
-    console.log("Estado de válvulas cargado:", data);
+    console.log("[DEBUG] Estado cargado:", data);
   } catch (e) {
-    console.error("No se pudo cargar el estado:", e);
+    console.error("[ERROR] No se pudo cargar el estado:", e);
     valvesContainer.innerHTML = "<p style='color:red;'>Error conectando al backend</p>";
   }
 }
 
-// ---------------------------------
-// ENCENDER / APAGAR
-// ---------------------------------
+// --- ENCENDER / APAGAR ---
 async function toggleValve(id) {
   const card = document.getElementById(`valve-${id}`);
   const state = card.classList.contains("active");
   const endpoint = state ? "off" : "on";
 
-  console.log(`Toggle válvula ${id}, acción: ${endpoint}`);
-
+  console.log(`[DEBUG] Toggle válvula ${id} -> ${endpoint}`);
   try {
-    await fetch(`${API_URL}/valve/${id}/${endpoint}`, { method: "POST" });
+    const res = await fetch(`${API_URL}/valve/${id}/${endpoint}`, { method: "POST" });
+    if (!res.ok) throw new Error("Error al cambiar estado");
     loadStatus();
   } catch (e) {
-    console.error("Error al cambiar estado de válvula:", e);
+    console.error(`[ERROR] Toggle válvula ${id} fallido:`, e);
   }
 }
 
-// ---------------------------------
-// PROGRAMAR VÁLVULA POR HORAS
-// ---------------------------------
+// --- PROGRAMAR VÁLVULA POR HORAS ---
 async function scheduleValve(id) {
-  const startInput = document.getElementById(`start-${id}`).value;
-  const endInput = document.getElementById(`end-${id}`).value;
+  const start = document.getElementById(`start-${id}`).value;
+  const end = document.getElementById(`end-${id}`).value;
 
-  if (!startInput || !endInput) {
-    return alert("Ingresa hora de inicio y fin válidas");
-  }
-
-  const [startHour, startMinute] = startInput.split(":").map(Number);
-  const [endHour, endMinute] = endInput.split(":").map(Number);
-
-  console.log(`Programando válvula ${id} de ${startHour}:${startMinute} a ${endHour}:${endMinute}`);
+  if (!start || !end) return alert("Ingresa horas válidas");
+  console.log(`[DEBUG] Programando válvula ${id} desde ${start} hasta ${end}`);
 
   try {
-    const res = await fetch(`${API_URL}/valve/${id}/schedule_hours`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ start_hour: startHour, start_minute: startMinute, end_hour: endHour, end_minute: endMinute })
+    const res = await fetch(`${API_URL}/valve/${id}/schedule_hours?start=${start}&end=${end}`, {
+      method: "POST"
     });
-    if (!res.ok) throw new Error("Error en el backend al programar");
-
-    alert(`Válvula ${id} programada: ${startHour}:${startMinute} → ${endHour}:${endMinute}`);
+    if (!res.ok) throw new Error("Error al programar válvula");
+    alert(`Válvula ${id} programada de ${start} a ${end}`);
     loadStatus();
   } catch (e) {
-    console.error("Error al programar válvula:", e);
+    console.error(`[ERROR] Programación válvula ${id} fallida:`, e);
     alert("No se pudo programar la válvula");
   }
 }
 
-// ---------------------------------
-// CARGAR AL INICIO
-// ---------------------------------
-loadStatus();
+// --- CARGAR AL INICIO ---
+window.onload = () => {
+  console.log("[DEBUG] Página cargada");
+  loadStatus();
+};
+
+window.toggleValve = toggleValve;
+window.scheduleValve = scheduleValve;
+window.login = login;
 
