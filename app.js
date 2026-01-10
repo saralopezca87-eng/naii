@@ -1,47 +1,10 @@
-// app.js
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.3.0/firebase-auth.js";
-
-// Configuración Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyAQJfBPBGFo8IujYZeNK3kr6EiX9xCGvdU",
-  authDomain: "sistemaderiego-8950d.firebaseapp.com",
-  projectId: "sistemaderiego-8950d",
-  storageBucket: "sistemaderiego-8950d.appspot.com",
-  messagingSenderId: "23168988354",
-  appId: "1:23168988354:web:bd1cf85aeec5b0df36f75b"
-};
-
-// Inicializar Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-
 const API_URL = "https://api.sistemaderiego.online";
+// Token se eliminará, controlaremos acceso luego con Firebase Auth
+// const API_TOKEN = "MI_TOKEN_SUPER_SEGURO_12345"; 
+
 const valvesContainer = document.getElementById("valves-container");
-const loginForm = document.getElementById("login-form");
 
-// --- Login ---
-window.login = async (email, password) => {
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-  } catch (err) {
-    alert("Error de login: " + err.message);
-  }
-};
-
-// Mostrar válvulas solo si el usuario está logueado
-onAuthStateChanged(auth, user => {
-  if (user) {
-    loginForm.style.display = "none";
-    valvesContainer.style.display = "grid";
-    loadStatus();
-  } else {
-    loginForm.style.display = "block";
-    valvesContainer.style.display = "none";
-  }
-});
-
-// --- Crear tarjetas de válvulas ---
+// CREAR TARJETAS DE VÁLVULAS
 function createValveCard(id, state) {
   const card = document.createElement("div");
   card.classList.add("valve-card");
@@ -52,17 +15,18 @@ function createValveCard(id, state) {
     <h2>Válvula ${id}</h2>
     <p>Estado: <span class="state-text">${state ? "ON" : "OFF"}</span></p>
     <button onclick="toggleValve(${id})">${state ? "Apagar" : "Encender"}</button>
-    <div class="schedule-inputs">
-      <input type="time" id="start-${id}" placeholder="Inicio">
-      <input type="time" id="end-${id}" placeholder="Fin">
+
+    <div class="schedule-container">
+      <label>Desde: <input type="time" id="start-${id}"></label>
+      <label>Hasta: <input type="time" id="end-${id}"></label>
+      <button onclick="scheduleValve(${id})">Programar</button>
     </div>
-    <button onclick="scheduleValve(${id})">Programar</button>
   `;
 
   valvesContainer.appendChild(card);
 }
 
-// --- Cargar estado inicial ---
+// CARGAR ESTADO INICIAL
 async function loadStatus() {
   try {
     const res = await fetch(`${API_URL}/status`);
@@ -78,29 +42,43 @@ async function loadStatus() {
   }
 }
 
-// --- Encender / Apagar ---
-window.toggleValve = async (id) => {
+// ENCENDER / APAGAR
+async function toggleValve(id) {
   const card = document.getElementById(`valve-${id}`);
   const state = card.classList.contains("active");
   const endpoint = state ? "off" : "on";
 
   await fetch(`${API_URL}/valve/${id}/${endpoint}`, { method: "POST" });
   loadStatus();
-};
+}
 
-// --- Programar válvula por intervalo de horas ---
-window.scheduleValve = async (id) => {
-  const startTime = document.getElementById(`start-${id}`).value;
-  const endTime = document.getElementById(`end-${id}`).value;
+// PROGRAMAR VÁLVULA POR INTERVALO DE HORAS
+async function scheduleValve(id) {
+  const start = document.getElementById(`start-${id}`).value;
+  const end = document.getElementById(`end-${id}`).value;
 
-  if (!startTime || !endTime) return alert("Ingresa ambos horarios");
+  if (!start || !end) return alert("Selecciona hora de inicio y fin");
 
-  await fetch(`${API_URL}/valve/${id}/schedule`, {
+  const [startHour, startMin] = start.split(":").map(Number);
+  const [endHour, endMin] = end.split(":").map(Number);
+
+  const startTime = `${startHour}:${startMin}`;
+  const endTime = `${endHour}:${endMin}`;
+
+  const res = await fetch(`${API_URL}/valve/${id}/schedule_by_hours`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ start: startTime, end: endTime })
   });
 
-  alert(`Válvula ${id} programada de ${startTime} a ${endTime}`);
+  if (res.ok) {
+    alert(`Válvula ${id} programada de ${start} a ${end}`);
+  } else {
+    alert("Error al programar la válvula");
+  }
+
   loadStatus();
-};
+}
+
+// CARGAR AL INICIO
+loadStatus();
