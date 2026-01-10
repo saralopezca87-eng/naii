@@ -8,5 +8,7 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  // Cache-first strategy puede añadirse aquí
+  event.respondWith(
+    fetch(event.request).catch(() => caches.match(event.request))
+  );
 });
