@@ -87,8 +87,8 @@ async function updateApiUrl() {
   if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
     API_URL = "http://localhost:8000";
   } else {
-    // Para producción, usar el dominio de la Raspberry Pi
-    API_URL = "http://sistemaderiego.online:8000";
+    // Para producción, usar HTTPS para evitar Mixed Content
+    API_URL = "https://sistemaderiego.online:8000";
   }
 }
 
