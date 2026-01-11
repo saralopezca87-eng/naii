@@ -103,11 +103,12 @@ header {
 
 @media (max-width: 600px) {
   #login-form {
-    max-width: 98vw;
-    width: 98vw;
+    max-width: 92vw;
+    width: 92vw;
     min-width: 0;
-    padding: 2.2rem 0.7rem 1.7rem 0.7rem;
+    padding: 2rem 0.5rem 1.5rem 0.5rem;
     border-radius: 16px;
+    border: 2.5px solid #1ecb6b;
   }
   #login-form h2 {
     font-size: 1.5rem;
