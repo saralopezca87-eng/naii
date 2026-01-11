@@ -321,13 +321,5 @@ async function scheduleValve(id) {
       });
     }
   }
-
-  // Inicializar controles del sistema solo después del login
-  function showInternalContent() {
-    // ...lógica existente para mostrar válvulas y datos internos...
-    setupSystemControls();
-  }
-
-  // Busca el lugar donde se llama a la función que muestra el contenido interno tras login exitoso
-  // Reemplaza la llamada existente por showInternalContent()
+}
 
