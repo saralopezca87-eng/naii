@@ -101,8 +101,26 @@ header {
   box-shadow: 0 4px 18px #43cea250;
 }
 
-@media (max-width: 500px) {
+@media (max-width: 600px) {
   #login-form {
-    padding: 1.5rem 1rem;
+    max-width: 98vw;
+    width: 98vw;
+    min-width: 0;
+    padding: 2.2rem 0.7rem 1.7rem 0.7rem;
+    border-radius: 16px;
+  }
+  #login-form h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1.1rem;
+  }
+  #login-form input[type="email"],
+  #login-form input[type="password"] {
+    font-size: 1.15rem;
+    padding: 1.1rem 0.7rem;
+    margin-bottom: 1.1rem;
+  }
+  #btn-login {
+    font-size: 1.18rem;
+    padding: 1.1rem;
   }
 }
