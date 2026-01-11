@@ -59,9 +59,15 @@ function createValveCard(id, state) {
     <h2>Válvula ${id}</h2>
     <p>Estado: <span class="state-text">${state ? "ON" : "OFF"}</span></p>
     <button onclick="toggleValve(${id})">${state ? "Apagar" : "Encender"}</button>
-    <div style="margin-top:8px;">
-      <label>Inicio: <input type="time" id="start-${id}"></label>
-      <label>Fin: <input type="time" id="end-${id}"></label>
+    <div style="margin-top:8px; display: flex; flex-direction: column; gap: 0.5rem; align-items: center;">
+      <div>
+        <label>Fecha inicio: <input type="date" id="start-date-${id}"></label>
+        <label>Hora inicio: <input type="time" id="start-${id}"></label>
+      </div>
+      <div>
+        <label>Fecha fin: <input type="date" id="end-date-${id}"></label>
+        <label>Hora fin: <input type="time" id="end-${id}"></label>
+      </div>
       <button onclick="scheduleValve(${id})">Programar</button>
     </div>
   `;
@@ -106,11 +112,17 @@ async function toggleValve(id) {
   }
 }
 
-// Programar válvula
+// Programar válvula (ahora con fecha y hora)
 async function scheduleValve(id) {
-  const start = document.getElementById(`start-${id}`).value;
-  const end = document.getElementById(`end-${id}`).value;
-  if (!start || !end) return alert("Debes ingresar hora de inicio y fin");
+  const startDate = document.getElementById(`start-date-${id}`).value;
+  const startTime = document.getElementById(`start-${id}`).value;
+  const endDate = document.getElementById(`end-date-${id}`).value;
+  const endTime = document.getElementById(`end-${id}`).value;
+  if (!startDate || !startTime || !endDate || !endTime) return alert("Debes ingresar fecha y hora de inicio y fin");
+
+  // Unir fecha y hora en formato ISO
+  const start = `${startDate}T${startTime}`;
+  const end = `${endDate}T${endTime}`;
 
   try {
     console.log(`Programando válvula ${id} de ${start} a ${end}`);
@@ -118,6 +130,7 @@ async function scheduleValve(id) {
       "Content-Type": "application/json"
     };
     if (currentUserToken) headers["Authorization"] = `Bearer ${currentUserToken}`;
+    // Por ahora seguimos usando el endpoint actual, luego se adaptará el backend
     const response = await fetch(`${API_URL}/valve/${id}/schedule_hours`, {
       method: "POST",
       headers,

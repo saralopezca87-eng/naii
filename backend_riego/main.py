@@ -55,20 +55,22 @@ async def valve_schedule(valve_id: int, seconds: int):
     return {"id": valve_id, "status": "scheduled", "seconds": seconds}
 
 # --- Programación por horas (nuevo) ---
+
 @app.post("/valve/{valve_id}/schedule_hours")
 async def valve_schedule_hours(valve_id: int, start: str, end: str):
     """
-    start y end en formato HH:MM (24h)
+    start y end en formato ISO: YYYY-MM-DDTHH:MM
     """
     log_event(f"POST /valve/{valve_id}/schedule_hours solicitado desde {start} hasta {end}")
 
     try:
-        start_time = datetime.strptime(start, "%H:%M").time()
-        end_time = datetime.strptime(end, "%H:%M").time()
+        start_dt = datetime.strptime(start, "%Y-%m-%dT%H:%M")
+        end_dt = datetime.strptime(end, "%Y-%m-%dT%H:%M")
     except ValueError:
-        log_event(f"Formato de hora inválido: start={start}, end={end}")
-        raise HTTPException(status_code=400, detail="Formato de hora inválido. Use HH:MM")
+        log_event(f"Formato de fecha/hora inválido: start={start}, end={end}")
+        raise HTTPException(status_code=400, detail="Formato de fecha/hora inválido. Use YYYY-MM-DDTHH:MM")
 
-    schedule_valve_hours(valve_id, start_time, end_time)
+    # Aquí deberías adaptar schedule_valve_hours para aceptar datetime completos
+    schedule_valve_hours(valve_id, start_dt, end_dt)
     log_event(f"Válvula {valve_id} programada de {start} a {end}")
     return {"id": valve_id, "status": "scheduled_hours", "start": start, "end": end}
