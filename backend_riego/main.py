@@ -1,5 +1,5 @@
 # main.py
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Body
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, time
@@ -64,7 +64,7 @@ class ScheduleRequest(BaseModel):
     end: str
 
 @app.post("/valve/{valve_id}/schedule_hours")
-async def valve_schedule_hours(valve_id: int, req: ScheduleRequest):
+async def valve_schedule_hours(valve_id: int, req: ScheduleRequest = Body(...)):
     log_event(f"DEBUG BODY: {req}")
     """
     start y end en formato ISO: YYYY-MM-DDTHH:MM
