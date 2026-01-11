@@ -1,3 +1,4 @@
+}
 // --- Mostrar contenido interno tras login ---
 function showInternalContent() {
   // Mostrar válvulas y controles del sistema
