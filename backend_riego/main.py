@@ -1,11 +1,25 @@
 import os
+
 # --- Endpoint para reiniciar la Raspberry Pi ---
 @app.post("/reboot")
 async def reboot(request: Request):
-    # Opcional: aquí podrías validar autenticación si lo deseas
     log_event("Reinicio solicitado desde el frontend")
     os.system("sudo reboot")
-    return {"message": "Reiniciando Raspberry Pi. Espera 3 minutos antes de intentar programar."}
+    return {"message": "Reiniciando sistema. Espera 3 minutos antes de intentar programar."}
+
+# --- Endpoint para apagar la Raspberry Pi ---
+@app.post("/shutdown")
+async def shutdown(request: Request):
+    log_event("Apagado solicitado desde el frontend")
+    os.system("sudo shutdown now")
+    return {"message": "Apagando sistema."}
+
+# --- Endpoint para encender la Raspberry Pi (requiere hardware especial) ---
+@app.post("/poweron")
+async def poweron(request: Request):
+    log_event("Encendido solicitado desde el frontend (requiere hardware especial)")
+    # Aquí deberías implementar el encendido remoto si tienes hardware compatible
+    return {"message": "Intento de encendido enviado (requiere hardware especial)."}
 # main.py
 from fastapi import FastAPI, HTTPException, Request, Body
 from pydantic import BaseModel

@@ -1,8 +1,12 @@
 // --- REINICIO DE RASPBERRY ---
+
 const btnReboot = document.getElementById("btn-reboot");
+const btnShutdown = document.getElementById("btn-shutdown");
+const btnPowerOn = document.getElementById("btn-poweron");
+
 if (btnReboot) {
   btnReboot.addEventListener("click", async () => {
-    if (!confirm("¿Seguro que deseas reiniciar la Raspberry Pi? Esto tomará unos minutos.")) return;
+    if (!confirm("¿Seguro que deseas reiniciar el sistema? Esto tomará unos minutos.")) return;
     btnReboot.disabled = true;
     btnReboot.textContent = "Reiniciando...";
     try {
@@ -10,16 +14,64 @@ if (btnReboot) {
       if (currentUserToken) headers["Authorization"] = `Bearer ${currentUserToken}`;
       const res = await fetch(`${API_URL}/reboot`, { method: "POST", headers });
       if (res.ok) {
-        alert("La Raspberry Pi se está reiniciando. Espera 3 minutos para efectuar tu programación.");
+        alert("El sistema se está reiniciando. Espera 3 minutos para efectuar tu programación.");
       } else {
-        alert("No se pudo reiniciar la Raspberry Pi. Intenta manualmente.");
+        alert("No se pudo reiniciar el sistema. Intenta manualmente.");
       }
     } catch (e) {
-      alert("Error al intentar reiniciar la Raspberry Pi: " + e.message);
+      alert("Error al intentar reiniciar el sistema: " + e.message);
     }
     setTimeout(() => {
       btnReboot.disabled = false;
-      btnReboot.textContent = "Reiniciar Raspberry Pi";
+      btnReboot.textContent = "Reiniciar sistema";
+    }, 20000);
+  });
+}
+
+if (btnShutdown) {
+  btnShutdown.addEventListener("click", async () => {
+    if (!confirm("¿Seguro que deseas apagar el sistema?")) return;
+    btnShutdown.disabled = true;
+    btnShutdown.textContent = "Apagando...";
+    try {
+      const headers = { "Content-Type": "application/json" };
+      if (currentUserToken) headers["Authorization"] = `Bearer ${currentUserToken}`;
+      const res = await fetch(`${API_URL}/shutdown`, { method: "POST", headers });
+      if (res.ok) {
+        alert("El sistema se está apagando. Para volver a encenderlo, hazlo manualmente o usa el botón 'Encender sistema' si está disponible.");
+      } else {
+        alert("No se pudo apagar el sistema. Intenta manualmente.");
+      }
+    } catch (e) {
+      alert("Error al intentar apagar el sistema: " + e.message);
+    }
+    setTimeout(() => {
+      btnShutdown.disabled = false;
+      btnShutdown.textContent = "Apagar sistema";
+    }, 20000);
+  });
+}
+
+if (btnPowerOn) {
+  btnPowerOn.addEventListener("click", async () => {
+    if (!confirm("¿Seguro que deseas encender el sistema? (Solo funciona si hay hardware de encendido remoto)")) return;
+    btnPowerOn.disabled = true;
+    btnPowerOn.textContent = "Encendiendo...";
+    try {
+      const headers = { "Content-Type": "application/json" };
+      if (currentUserToken) headers["Authorization"] = `Bearer ${currentUserToken}`;
+      const res = await fetch(`${API_URL}/poweron`, { method: "POST", headers });
+      if (res.ok) {
+        alert("El sistema se está encendiendo (si el hardware lo permite).");
+      } else {
+        alert("No se pudo encender el sistema. Intenta manualmente.");
+      }
+    } catch (e) {
+      alert("Error al intentar encender el sistema: " + e.message);
+    }
+    setTimeout(() => {
+      btnPowerOn.disabled = false;
+      btnPowerOn.textContent = "Encender sistema";
     }, 20000);
   });
 }
