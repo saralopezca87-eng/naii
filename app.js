@@ -140,8 +140,18 @@ async function scheduleValve(id) {
       let errorMsg = `Error ${response.status}`;
       try {
         const errorData = await response.json();
-        errorMsg += ": " + (errorData.detail || JSON.stringify(errorData));
-      } catch {}
+        if (errorData.detail) {
+          if (Array.isArray(errorData.detail)) {
+            errorMsg += ":\n" + errorData.detail.map(e => (e.msg ? e.msg : JSON.stringify(e))).join("\n");
+          } else {
+            errorMsg += ": " + errorData.detail;
+          }
+        } else {
+          errorMsg += ": " + JSON.stringify(errorData);
+        }
+      } catch (err) {
+        errorMsg += ": No se pudo leer el mensaje de error del backend.";
+      }
       alert(`No se pudo programar la válvula: ${errorMsg}`);
       console.error("Error al programar válvula:", errorMsg);
       return;
