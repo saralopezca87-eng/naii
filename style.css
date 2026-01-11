@@ -1,3 +1,28 @@
+/* Panel de válvulas oculto por defecto y grid tras login */
+#valves-container {
+  display: none;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  padding: 2rem;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.valve-card {
+  background: rgba(255,255,255,0.92);
+  border: 2px solid #43cea2;
+  border-radius: 15px;
+  padding: 1rem;
+  text-align: center;
+  box-shadow: 0 2px 12px #43cea220;
+  transition: box-shadow 0.2s, border 0.2s;
+}
+.valve-card.active {
+  border-color: #185a9d;
+  box-shadow: 0 4px 18px #185a9d33;
+}
 /* Ocultar panel de válvulas por defecto */
 #valves-container {
   display: none;
