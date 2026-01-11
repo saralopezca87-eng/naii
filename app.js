@@ -1,3 +1,11 @@
+// --- Mostrar contenido interno tras login ---
+function showInternalContent() {
+  // Mostrar válvulas y controles del sistema
+  if (valvesContainer) valvesContainer.style.display = "grid";
+  const systemControls = document.getElementById("system-controls");
+  if (systemControls) systemControls.style.display = "flex";
+  setupSystemControls();
+}
 // --- REINICIO DE RASPBERRY ---
 
 const btnReboot = document.getElementById("btn-reboot");
