@@ -1,3 +1,7 @@
+/* Ocultar panel de válvulas por defecto */
+#valves-container {
+  display: none;
+}
 
 body {
   min-height: 100vh;
