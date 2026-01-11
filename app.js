@@ -1,3 +1,28 @@
+// --- REINICIO DE RASPBERRY ---
+const btnReboot = document.getElementById("btn-reboot");
+if (btnReboot) {
+  btnReboot.addEventListener("click", async () => {
+    if (!confirm("¿Seguro que deseas reiniciar la Raspberry Pi? Esto tomará unos minutos.")) return;
+    btnReboot.disabled = true;
+    btnReboot.textContent = "Reiniciando...";
+    try {
+      const headers = { "Content-Type": "application/json" };
+      if (currentUserToken) headers["Authorization"] = `Bearer ${currentUserToken}`;
+      const res = await fetch(`${API_URL}/reboot`, { method: "POST", headers });
+      if (res.ok) {
+        alert("La Raspberry Pi se está reiniciando. Espera 3 minutos para efectuar tu programación.");
+      } else {
+        alert("No se pudo reiniciar la Raspberry Pi. Intenta manualmente.");
+      }
+    } catch (e) {
+      alert("Error al intentar reiniciar la Raspberry Pi: " + e.message);
+    }
+    setTimeout(() => {
+      btnReboot.disabled = false;
+      btnReboot.textContent = "Reiniciar Raspberry Pi";
+    }, 20000);
+  });
+}
 // app.js
 console.log("app.js cargado correctamente");
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";

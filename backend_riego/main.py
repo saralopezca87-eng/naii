@@ -1,3 +1,11 @@
+import os
+# --- Endpoint para reiniciar la Raspberry Pi ---
+@app.post("/reboot")
+async def reboot(request: Request):
+    # Opcional: aquí podrías validar autenticación si lo deseas
+    log_event("Reinicio solicitado desde el frontend")
+    os.system("sudo reboot")
+    return {"message": "Reiniciando Raspberry Pi. Espera 3 minutos antes de intentar programar."}
 # main.py
 from fastapi import FastAPI, HTTPException, Request, Body
 from pydantic import BaseModel
