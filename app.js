@@ -30,6 +30,25 @@ const btnLogin = document.getElementById("btn-login");
 
 // FUNCION LOGIN
 let currentUserToken = null;
+
+// --- Cargar estado inicial de válvulas ---
+async function loadStatus() {
+  try {
+    console.log("Cargando estado de válvulas...");
+    const headers = currentUserToken ? { "Authorization": `Bearer ${currentUserToken}` } : {};
+    const res = await fetch(`${API_URL}/status`, { headers });
+    if (!res.ok) throw new Error("Error al obtener estado");
+    const data = await res.json();
+    valvesContainer.innerHTML = "";
+    for (let id = 1; id <= 12; id++) {
+      createValveCard(id, data[id]);
+    }
+  } catch (e) {
+    console.error("No se pudo cargar el estado:", e);
+    valvesContainer.innerHTML = "<p style='color:red;'>Error conectando al backend</p>";
+  }
+}
+
 function login(email, password) {
   console.log("Intentando login con:", email, password);
   signInWithEmailAndPassword(auth, email, password)
@@ -61,6 +80,112 @@ btnLogin.addEventListener("click", () => {
 // --- FUNCIONES DE VÁLVULAS ---
 // Endpoint de la Raspberry Pi para obtener su IP pública
 const RASPBERRY_API_URL = "http://localhost:8000/get-public-ip";
+
+let API_URL = "http://localhost:8000";
+
+async function updateApiUrl() {
+  if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+    API_URL = "http://localhost:8000";
+  } else {
+    try {
+      const res = await fetch(RASPBERRY_API_URL);
+      const data = await res.json();
+      if (data.ip) {
+        API_URL = `http://${data.ip}:8000`;
+      } else {
+        API_URL = "";
+      }
+    } catch {
+      API_URL = "";
+    }
+  }
+}
+
+updateApiUrl();
+
+function createValveCard(id, state) {
+  const card = document.createElement("div");
+  card.classList.add("valve-card");
+  if (state) card.classList.add("active");
+  card.id = `valve-${id}`;
+
+  card.innerHTML = `
+    <h2>Válvula ${id}</h2>
+    <p>Estado: <span class="state-text">${state ? "ON" : "OFF"}</span></p>
+    <button onclick="toggleValve(${id})">${state ? "Apagar" : "Encender"}</button>
+    <div style="margin-top:8px; display: flex; flex-direction: column; gap: 0.5rem; align-items: center;">
+      <div>
+        <label>Fecha inicio: <input type="date" id="start-date-${id}"></label>
+        <label>Hora inicio: <input type="time" id="start-${id}"></label>
+      </div>
+      <div>
+        <label>Fecha fin: <input type="date" id="end-date-${id}"></label>
+        <label>Hora fin: <input type="time" id="end-${id}"></label>
+      </div>
+      <button onclick="scheduleValve(${id})">Programar</button>
+    </div>
+  `;
+
+  valvesContainer.appendChild(card);
+}
+
+// Encender / Apagar
+async function toggleValve(id) {
+  const card = document.getElementById(`valve-${id}`);
+  const state = card.classList.contains("active");
+  const endpoint = state ? "off" : "on";
+
+  try {
+    console.log(`Enviando request a válvula ${id}: ${endpoint}`);
+    const headers = currentUserToken ? { "Authorization": `Bearer ${currentUserToken}` } : {};
+    await fetch(`${API_URL}/valve/${id}/${endpoint}`, {
+      method: "POST",
+      headers
+    });
+    loadStatus();
+  } catch (e) {
+    console.error("Error al togglear válvula:", e);
+  }
+}
+
+// Programar válvula (ahora con fecha y hora)
+async function scheduleValve(id) {
+  const startDate = document.getElementById(`start-date-${id}`).value;
+  const startTime = document.getElementById(`start-${id}`).value;
+  const endDate = document.getElementById(`end-date-${id}`).value;
+  const endTime = document.getElementById(`end-${id}`).value;
+
+  if (!startDate || !startTime || !endDate || !endTime) {
+    alert("Por favor, completa todos los campos de fecha y hora.");
+    return;
+  }
+
+  const start = `${startDate}T${startTime}`;
+  const end = `${endDate}T${endTime}`;
+
+  try {
+    const headers = currentUserToken ? { "Authorization": `Bearer ${currentUserToken}` } : {};
+    const res = await fetch(`${API_URL}/valve/${id}/schedule_hours`, {
+      method: "POST",
+      headers: {
+        ...headers,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ start, end })
+    });
+
+    if (res.ok) {
+      alert(`Válvula ${id} programada de ${start} a ${end}`);
+      loadStatus();
+    } else {
+      const error = await res.text();
+      alert(`Error al programar: ${error}`);
+    }
+  } catch (e) {
+    console.error("Error al programar válvula:", e);
+    alert("Error al programar válvula: " + e.message);
+  }
+}
 
 // --- Controles del sistema ---
 function setupSystemControls() {
