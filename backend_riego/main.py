@@ -1,5 +1,6 @@
 # main.py
 from fastapi import FastAPI, HTTPException, Request
+from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, time
 
@@ -56,21 +57,26 @@ async def valve_schedule(valve_id: int, seconds: int):
 
 # --- Programación por horas (nuevo) ---
 
+
+# Modelo Pydantic para la programación
+class ScheduleRequest(BaseModel):
+    start: str
+    end: str
+
 @app.post("/valve/{valve_id}/schedule_hours")
-async def valve_schedule_hours(valve_id: int, start: str, end: str):
+async def valve_schedule_hours(valve_id: int, req: ScheduleRequest):
     """
     start y end en formato ISO: YYYY-MM-DDTHH:MM
     """
-    log_event(f"POST /valve/{valve_id}/schedule_hours solicitado desde {start} hasta {end}")
+    log_event(f"POST /valve/{valve_id}/schedule_hours solicitado desde {req.start} hasta {req.end}")
 
     try:
-        start_dt = datetime.strptime(start, "%Y-%m-%dT%H:%M")
-        end_dt = datetime.strptime(end, "%Y-%m-%dT%H:%M")
+        start_dt = datetime.strptime(req.start, "%Y-%m-%dT%H:%M")
+        end_dt = datetime.strptime(req.end, "%Y-%m-%dT%H:%M")
     except ValueError:
-        log_event(f"Formato de fecha/hora inválido: start={start}, end={end}")
+        log_event(f"Formato de fecha/hora inválido: start={req.start}, end={req.end}")
         raise HTTPException(status_code=400, detail="Formato de fecha/hora inválido. Use YYYY-MM-DDTHH:MM")
 
-    # Aquí deberías adaptar schedule_valve_hours para aceptar datetime completos
     schedule_valve_hours(valve_id, start_dt, end_dt)
-    log_event(f"Válvula {valve_id} programada de {start} a {end}")
-    return {"id": valve_id, "status": "scheduled_hours", "start": start, "end": end}
+    log_event(f"Válvula {valve_id} programada de {req.start} a {req.end}")
+    return {"id": valve_id, "status": "scheduled_hours", "start": req.start, "end": req.end}
