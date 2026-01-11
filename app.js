@@ -331,6 +331,5 @@ function setupSystemControls() {
       }, 20000);
     });
   }
-}
-}
+
 
