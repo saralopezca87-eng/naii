@@ -128,11 +128,13 @@ async def valve_schedule_hours(valve_id: int, req: ScheduleRequest = Body(...)):
         )
     now = datetime.now()
     log_event(f"now: {now}, start_dt: {start_dt}, end_dt: {end_dt}"); print(f"now: {now}, start_dt: {start_dt}, end_dt: {end_dt}")
-    if start_dt <= now:
-        log_event(f"Hora de inicio inválida (pasada): {req.start} -> {start_dt}, ahora: {now}"); print(f"Hora de inicio inválida (pasada): {req.start} -> {start_dt}, ahora: {now}")
+    # Permitir tolerancia de 1 minuto
+    from datetime import timedelta
+    if start_dt <= now - timedelta(minutes=1):
+        log_event(f"Hora de inicio inválida (pasada, incluso con tolerancia de 1 min): {req.start} -> {start_dt}, ahora: {now}"); print(f"Hora de inicio inválida (pasada, incluso con tolerancia de 1 min): {req.start} -> {start_dt}, ahora: {now}")
         raise HTTPException(
             status_code=400,
-            detail="La hora de inicio debe ser en el futuro"
+            detail="La hora de inicio debe ser al menos igual a la hora actual menos 1 minuto (tolerancia)."
         )
     log_event(f"Programando válvula {valve_id} de {start_dt} a {end_dt} (ahora: {now})"); print(f"Programando válvula {valve_id} de {start_dt} a {end_dt} (ahora: {now})")
     schedule_valve_hours(valve_id, start_dt, end_dt)
