@@ -107,42 +107,36 @@ async def valve_schedule(valve_id: int, seconds: int):
 
 @app.post("/valve/{valve_id}/schedule_hours")
 async def valve_schedule_hours(valve_id: int, req: ScheduleRequest = Body(...)):
-    log_event(f"DEBUG BODY: {req}")
-
+    log_event(f"DEBUG BODY: {req}"); print(f"DEBUG BODY: {req}")
     try:
-        # Try parsing with seconds first, then without
+        log_event(f"Recibido start: {req.start}, end: {req.end}"); print(f"Recibido start: {req.start}, end: {req.end}")
+        # Try parsing with seconds first, luego sin segundos
         try:
             start_dt = datetime.strptime(req.start, "%Y-%m-%dT%H:%M:%S")
         except ValueError:
             start_dt = datetime.strptime(req.start, "%Y-%m-%dT%H:%M")
-        
         try:
             end_dt = datetime.strptime(req.end, "%Y-%m-%dT%H:%M:%S")
         except ValueError:
             end_dt = datetime.strptime(req.end, "%Y-%m-%dT%H:%M")
+        log_event(f"Parsed start_dt: {start_dt}, end_dt: {end_dt}"); print(f"Parsed start_dt: {start_dt}, end_dt: {end_dt}")
     except ValueError:
-        log_event(f"Formato inválido: {req.start} - {req.end}")
+        log_event(f"Formato inválido: {req.start} - {req.end}"); print(f"Formato inválido: {req.start} - {req.end}")
         raise HTTPException(
             status_code=400,
             detail="Formato inválido. Use YYYY-MM-DDTHH:MM o YYYY-MM-DDTHH:MM:SS"
         )
-
-    # Validate that start time is in the future
     now = datetime.now()
+    log_event(f"now: {now}, start_dt: {start_dt}, end_dt: {end_dt}"); print(f"now: {now}, start_dt: {start_dt}, end_dt: {end_dt}")
     if start_dt <= now:
-        log_event(f"Hora de inicio inválida (pasada): {req.start} -> {start_dt}, ahora: {now}")
+        log_event(f"Hora de inicio inválida (pasada): {req.start} -> {start_dt}, ahora: {now}"); print(f"Hora de inicio inválida (pasada): {req.start} -> {start_dt}, ahora: {now}")
         raise HTTPException(
             status_code=400,
             detail="La hora de inicio debe ser en el futuro"
         )
-
-    log_event(f"Programando válvula {valve_id} de {start_dt} a {end_dt} (ahora: {now})")
+    log_event(f"Programando válvula {valve_id} de {start_dt} a {end_dt} (ahora: {now})"); print(f"Programando válvula {valve_id} de {start_dt} a {end_dt} (ahora: {now})")
     schedule_valve_hours(valve_id, start_dt, end_dt)
-
-    log_event(
-        f"Válvula {valve_id} programada de {req.start} a {req.end}"
-    )
-
+    log_event(f"Válvula {valve_id} programada de {req.start} a {req.end}"); print(f"Válvula {valve_id} programada de {req.start} a {req.end}")
     return {
         "id": valve_id,
         "status": "scheduled_hours",
