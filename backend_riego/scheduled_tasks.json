@@ -1,0 +1,3 @@
+# Archivo para persistir programaciones de válvulas
+# Este archivo será leído y escrito por backend_riego/scheduler.py
+[]

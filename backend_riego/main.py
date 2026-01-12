@@ -18,7 +18,10 @@ from backend_riego.logger import log_event
 # =========================
 # APP
 # =========================
+
 app = FastAPI(title="Sistema de Riego")
+
+# APScheduler maneja la persistencia automáticamente, no es necesario restaurar manualmente
 
 
 # =========================
@@ -43,8 +46,16 @@ app.add_middleware(
 # MODELOS
 # =========================
 class ScheduleRequest(BaseModel):
-    start: str
-    end: str
+    start: str = "2026-01-11T23:00"  # Fecha y hora de inicio en formato ISO8601
+    end: str = "2026-01-11T23:02"    # Fecha y hora de fin en formato ISO8601
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "start": "2026-01-11T23:00",
+                "end": "2026-01-11T23:02"
+            }
+        }
 
 
 # =========================
@@ -63,7 +74,11 @@ async def get_public_ip():
 # =========================
 # ESTADO DEL SISTEMA
 # =========================
-@app.get("/status")
+@app.get(
+    "/status",
+    summary="Estado de todas las válvulas",
+    description="Devuelve el estado actual (on/off) de todas las válvulas."
+)
 async def status():
     """Obtener el estado actual de todas las válvulas"""
     log_event("GET /status solicitado")
@@ -75,7 +90,11 @@ async def status():
 # =========================
 # CONTROL DE VÁLVULAS
 # =========================
-@app.post("/valve/{valve_id}/on")
+@app.post(
+    "/valve/{valve_id}/on",
+    summary="Enciende una válvula",
+    description="Enciende la válvula indicada de forma inmediata."
+)
 async def valve_on(valve_id: int):
     log_event(f"POST /valve/{valve_id}/on solicitado")
     turn_on(valve_id)
@@ -83,7 +102,11 @@ async def valve_on(valve_id: int):
     return {"id": valve_id, "status": "on"}
 
 
-@app.post("/valve/{valve_id}/off")
+@app.post(
+    "/valve/{valve_id}/off",
+    summary="Apaga una válvula",
+    description="Apaga la válvula indicada de forma inmediata."
+)
 async def valve_off(valve_id: int):
     log_event(f"POST /valve/{valve_id}/off solicitado")
     turn_off(valve_id)
@@ -94,8 +117,12 @@ async def valve_off(valve_id: int):
 # =========================
 # PROGRAMACIÓN
 # =========================
-@app.post("/valve/{valve_id}/schedule")
-async def valve_schedule(valve_id: int, seconds: int):
+@app.post(
+    "/valve/{valve_id}/schedule",
+    summary="Programa una válvula por segundos",
+    description="Programa la válvula indicada para encenderse durante una cantidad de segundos."
+)
+async def valve_schedule(valve_id: int, seconds: int = Body(..., example=60)):
     log_event(f"POST /valve/{valve_id}/schedule por {seconds} segundos")
     schedule_valve(valve_id, seconds)
     return {
@@ -105,7 +132,11 @@ async def valve_schedule(valve_id: int, seconds: int):
     }
 
 
-@app.post("/valve/{valve_id}/schedule_hours")
+@app.post(
+    "/valve/{valve_id}/schedule_hours",
+    summary="Programa una válvula por rango de fecha/hora",
+    description="Programa la válvula indicada para encenderse y apagarse automáticamente entre las fechas y horas especificadas. El rango debe ser futuro, válido y no mayor a 7 días."
+)
 async def valve_schedule_hours(valve_id: int, req: ScheduleRequest = Body(...)):
     log_event(f"DEBUG BODY: {req}"); print(f"DEBUG BODY: {req}")
     try:
@@ -128,13 +159,25 @@ async def valve_schedule_hours(valve_id: int, req: ScheduleRequest = Body(...)):
         )
     now = datetime.now()
     log_event(f"now: {now}, start_dt: {start_dt}, end_dt: {end_dt}"); print(f"now: {now}, start_dt: {start_dt}, end_dt: {end_dt}")
-    # Permitir tolerancia de 1 minuto
     from datetime import timedelta
-    if start_dt <= now - timedelta(minutes=1):
-        log_event(f"Hora de inicio inválida (pasada, incluso con tolerancia de 1 min): {req.start} -> {start_dt}, ahora: {now}"); print(f"Hora de inicio inválida (pasada, incluso con tolerancia de 1 min): {req.start} -> {start_dt}, ahora: {now}")
+    # Validaciones adicionales
+    if start_dt < now - timedelta(minutes=1):
+        log_event(f"Hora de inicio inválida (pasada): {req.start} -> {start_dt}, ahora: {now}"); print(f"Hora de inicio inválida (pasada): {req.start} -> {start_dt}, ahora: {now}")
         raise HTTPException(
             status_code=400,
-            detail="La hora de inicio debe ser al menos igual a la hora actual menos 1 minuto (tolerancia)."
+            detail="La hora de inicio debe ser igual o posterior a la hora actual (tolerancia 1 min)."
+        )
+    if end_dt <= start_dt:
+        log_event(f"Hora de fin inválida: end <= start. start: {start_dt}, end: {end_dt}"); print(f"Hora de fin inválida: end <= start. start: {start_dt}, end: {end_dt}")
+        raise HTTPException(
+            status_code=400,
+            detail="La hora de fin debe ser posterior a la hora de inicio."
+        )
+    if (end_dt - start_dt) > timedelta(days=7):
+        log_event(f"Rango demasiado largo: más de 7 días. start: {start_dt}, end: {end_dt}"); print(f"Rango demasiado largo: más de 7 días. start: {start_dt}, end: {end_dt}")
+        raise HTTPException(
+            status_code=400,
+            detail="El rango máximo permitido es de 7 días."
         )
     log_event(f"Programando válvula {valve_id} de {start_dt} a {end_dt} (ahora: {now})"); print(f"Programando válvula {valve_id} de {start_dt} a {end_dt} (ahora: {now})")
     schedule_valve_hours(valve_id, start_dt, end_dt)
