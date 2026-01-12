@@ -157,16 +157,9 @@ async function scheduleValve(id) {
     return;
   }
 
-  // Convertir a UTC para evitar problemas de zona horaria
-  function toUTCString(date, time) {
-    const [year, month, day] = date.split('-');
-    const [hour, minute] = time.split(':');
-    const d = new Date(Date.UTC(year, month - 1, day, hour, minute));
-    return d.toISOString().slice(0, 16); // YYYY-MM-DDTHH:MM
-  }
-
-  const start = toUTCString(startDate, startTime);
-  const end = toUTCString(endDate, endTime);
+  // Usar la hora local seleccionada por el usuario
+  const start = `${startDate}T${startTime}`;
+  const end = `${endDate}T${endTime}`;
 
   try {
     const headers = currentUserToken ? { "Authorization": `Bearer ${currentUserToken}` } : {};
