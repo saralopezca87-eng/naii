@@ -69,6 +69,18 @@ async def get_public_ip():
 
 
 # =========================
+# ESTADO DEL SISTEMA
+# =========================
+@app.get("/status")
+async def get_status():
+    """Obtener el estado actual de todas las válvulas"""
+    log_event("GET /status solicitado")
+    status = get_status()
+    log_event(f"Estado de válvulas: {status}")
+    return status
+
+
+# =========================
 # CONTROL DE VÁLVULAS
 # =========================
 @app.post("/valve/{valve_id}/on")
