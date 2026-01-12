@@ -264,3 +264,60 @@ header {
     padding: 1.1rem;
   }
 }
+
+/* Controles del sistema */
+#system-controls {
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  position: relative;
+  z-index: 10;
+}
+
+#system-controls button {
+  padding: 1rem 1.5rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  position: relative;
+  z-index: 11;
+}
+
+#btn-reboot {
+  background: #185a9d;
+  color: #fff;
+  box-shadow: 0 2px 12px #185a9d33;
+}
+
+#btn-shutdown {
+  background: #c0392b;
+  color: #fff;
+  box-shadow: 0 2px 12px #c0392b33;
+}
+
+#btn-poweron {
+  background: #27ae60;
+  color: #fff;
+  box-shadow: 0 2px 12px #27ae6033;
+}
+
+#system-controls button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+#system-controls button:active {
+  transform: translateY(0);
+}
